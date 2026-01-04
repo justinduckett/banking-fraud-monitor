@@ -3,6 +3,8 @@ import random
 from faker import Faker
 from datetime import datetime
 import time
+from google.oauth2 import service_account
+import pandas_gbq
 
 # Initialize Faker
 fake = Faker()
@@ -51,12 +53,31 @@ def main():
     data = [generate_transaction() for _ in range(NUM_TRANSACTIONS)]
     df = pd.DataFrame(data)
 
-    # Save locally to check our work
-    filename = f"transactions_{datetime.now().strftime('%Y%m%d')}.csv"
-    df.to_csv(filename, index=False)
+    # 1. Define Authentication
+    # This tells Python: "I am this Service Account, here is my ID."
+    credentials = service_account.Credentials.from_service_account_file(
+        'service_account.json',
+    )
 
-    print(f"Success! Saved {len(df)} rows to {filename}")
-    print(df.head())
+    # 2. Upload to BigQuery
+    # Format: project_id.dataset_id.table_id
+    project_id = 'banking-fraud-monitor'
+    table_id = 'fraud_data.raw_transactions'
+
+    print(f"Uploading {len(df)} rows to BigQuery...")
+
+    try:
+        pandas_gbq.to_gbq(
+            df,  # The dataframe is now the first argument
+            destination_table=table_id,
+            project_id=project_id,
+            credentials=credentials,
+            if_exists='append'
+        )
+        print("Success! Data uploaded to BigQuery.")
+
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 if __name__ == "__main__":
