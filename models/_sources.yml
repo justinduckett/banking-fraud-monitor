@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: fraud_raw
+    database: banking-fraud-monitor
+    schema: fraud_data
+    tables:
+      - name: raw_transactions
+        description: "Raw transaction logs ingested via Python script"
+        columns:
+          - name: transaction_id
+            tests:
+              - unique
+              - not_null
