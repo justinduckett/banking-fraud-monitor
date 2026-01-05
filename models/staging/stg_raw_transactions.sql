@@ -1,6 +1,5 @@
 with source as (
 
-    -- logic: grab the raw data from the source we just defined in the YML file
     select * from {{ source('fraud_raw', 'raw_transactions') }}
 
 ),
@@ -8,21 +7,21 @@ with source as (
 renamed as (
 
     select
-        -- IDs
-        transaction_id,
-        customer_id,
-        merchant_id,
+        -- IDs: explicit STRING casts are crucial for BI tools (prevents summing IDs)
+        cast(transaction_id as string) as transaction_id,
+        cast(customer_id as string) as customer_id,
+        cast(merchant_id as string) as merchant_id,
 
-        -- Timestamps: Explicitly cast to ensure BigQuery treats it as time, not text
+        -- Timestamps: explicit TIMESTAMP cast
         cast(timestamp as timestamp) as transaction_at,
 
-        -- Numerics: Ensure money is treated as numbers
+        -- Financials: explicit NUMERIC cast (better than Float for money)
         cast(amount as numeric) as amount,
 
-        -- Dimensions
-        category,
+        -- Dimensions: explicit STRING cast
+        cast(category as string) as category,
         
-        -- Logic: We keep the flag for testing, but in real life you might rename it
+        -- Logic: explicit BOOLEAN cast
         cast(is_suspicious_flag as boolean) as is_suspicious_flag
 
     from source
