@@ -1,0 +1,39 @@
+name: Daily Fraud Data Ingest
+
+# Trigger: Run every day at 8:00 AM UTC
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  # Allow manual trigger button for testing
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: |
+          pip install pandas pandas-gbq faker google-auth
+
+      - name: Run Data Generator
+        env:
+          # We load the Key from GitHub Secrets into a file
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          # Create the key file from the secret
+          echo "$GCP_SA_KEY" > gcp_key.json
+
+          # Tell Google where the key is
+          export GOOGLE_APPLICATION_CREDENTIALS="gcp_key.json"
+
+          # Run the script
+          python generate_data.py
