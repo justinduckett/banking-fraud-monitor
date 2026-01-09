@@ -33,14 +33,15 @@ def generate_transaction():
         "customer_id": random.randint(1001, 1020),
         "merchant_id": random.randint(500, 550),
         "timestamp": fake_time,
-        "category": random.choice(['food', 'transport', 'retail', 'electronics', 'travel']),
+        "category": random.choice(['groceries', 'restaurants', 'entertainment', 'transport', 'retail', 'electronics', 'travel', 'home_improvement', 'clothing']),
     }
 
     # Fraud Logic (Keep this the same)
     if is_fraud:
         transaction['amount'] = round(random.uniform(1000, 9999), 2)
         transaction['is_suspicious_flag'] = True
-        transaction['category'] = 'electronics'
+        transaction['category'] = random.choice(
+            ['electronics', 'gift_cards', 'crypto', 'online_gaming', 'cash_advance'])
     else:
         transaction['amount'] = round(random.uniform(5.00, 150.00), 2)
         transaction['is_suspicious_flag'] = False
