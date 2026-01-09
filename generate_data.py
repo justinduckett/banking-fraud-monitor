@@ -16,31 +16,32 @@ FRAUD_RATIO = 0.05      # 5% of transactions should be suspicious
 
 def generate_transaction():
     """
-    Generates a single transaction. 
-    Most are normal, some are intentionally 'suspicious' to test our models later.
+    Generates a transaction for 'Now', but with a random time offset 
+    within the last 24 hours to simulate a full day of activity.
     """
     is_fraud = random.random() < FRAUD_RATIO
 
+    # LOGIC CHANGE:
+    # Instead of exactly "now" (which clusters data),
+    # we pick a random second in the last 24 hours.
+    seconds_in_day = 24 * 60 * 60
+    random_second = random.randint(0, seconds_in_day)
+    fake_time = datetime.now() - pd.Timedelta(seconds=random_second)
+
     transaction = {
         "transaction_id": fake.uuid4(),
-        # Simulating a small user base of 20 people
         "customer_id": random.randint(1001, 1020),
         "merchant_id": random.randint(500, 550),
-        "timestamp": datetime.now(),  # Uses current time for "fresh" data
+        "timestamp": fake_time,
         "category": random.choice(['food', 'transport', 'retail', 'electronics', 'travel']),
     }
 
-    # FRAUD INJECTION LOGIC
-    # We intentionally create patterns we can detect with SQL later
+    # Fraud Logic (Keep this the same)
     if is_fraud:
-        # Pattern 1: High Value amount (e.g., $9,000 for electronics)
         transaction['amount'] = round(random.uniform(1000, 9999), 2)
-        # Helper for us to check accuracy later
         transaction['is_suspicious_flag'] = True
-        # Fraudsters love resaleable items
         transaction['category'] = 'electronics'
     else:
-        # Normal spending pattern
         transaction['amount'] = round(random.uniform(5.00, 150.00), 2)
         transaction['is_suspicious_flag'] = False
 
