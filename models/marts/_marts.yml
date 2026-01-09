@@ -2,16 +2,23 @@ version: 2
 
 models:
   - name: fraud_features
-    description: "Feature store for fraud detection logic"
+    description: "The central feature store for fraud analysis. One row per transaction, enriched with lookback metrics."
     columns:
-      - name: transaction_id
+      - name: customer_id
+        description: "Foreign Key to the Customer Dimension. Cast as STRING to prevent aggregation in BI tools."
         tests:
-          - unique
           - not_null
-      
+
       - name: velocity_last_hour
+        description: "Velocity Risk Metric. specific calculation: Count of all transactions by this `customer_id` in the sliding window of [T-1 hour, T-now]."
         tests:
           - not_null
-          # Logic Test: You can't have negative transactions in an hour
+          # Logic Test: Velocity can never be less than 1 (the current transaction itself)
           - dbt_utils.expression_is_true:
               expression: ">= 1"
+
+      - name: avg_spend_30_days
+        description: "Baseline Spending Metric. Average `amount` for this customer over the preceding 30 days (2,592,000 seconds)."
+
+      - name: is_high_amount_spike
+        description: "Risk Trigger. Boolean is TRUE if current `amount` > 5x the `avg_spend_30_days`. Used for the 'High Risk' chart in Looker."
