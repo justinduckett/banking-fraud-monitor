@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: fraud_features
+    description: "Feature store for fraud detection logic"
+    columns:
+      - name: transaction_id
+        tests:
+          - unique
+          - not_null
+      
+      - name: velocity_last_hour
+        tests:
+          - not_null
+          # Logic Test: You can't have negative transactions in an hour
+          - dbt_utils.expression_is_true:
+              expression: ">= 1"
