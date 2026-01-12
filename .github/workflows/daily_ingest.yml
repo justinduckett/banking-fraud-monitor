@@ -1,0 +1,41 @@
+name: Daily Fraud Data Ingest
+
+on:
+  schedule:
+    # Run at 8:00 AM UTC every day
+    - cron: "0 8 * * *"
+  # Allows manual trigger
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          # Updated to 3.11 to fix the Google API warning
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pandas pandas-gbq faker google-auth db-dtypes
+
+      - name: Run Data Generator
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          # Ensure this matches your project ID
+          GCP_PROJECT_ID: banking-fraud-monitor
+        run: |
+          # 1. Create the key file with the EXACT name your script expects
+          echo "$GCP_SA_KEY" > service_account.json
+
+          # 2. Set the environment variable (Best Practice)
+          export GOOGLE_APPLICATION_CREDENTIALS="service_account.json"
+
+          # 3. Run the script
+          python generate_data.py
