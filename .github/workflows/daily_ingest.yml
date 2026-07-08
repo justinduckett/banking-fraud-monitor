@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pandas pandas-gbq faker google-auth db-dtypes
+          pip install -r requirements.txt
 
       - name: Run Data Generator
         env:
