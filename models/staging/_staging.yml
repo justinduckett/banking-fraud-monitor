@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: stg_raw_transactions
+    description: >
+      Staging layer for raw transactions. One row per transaction, 1:1 with
+      the source table. No business logic: this model only applies explicit
+      type casts (data contract for downstream consumers) and renames
+      `timestamp` to `transaction_at` to avoid colliding with the SQL
+      reserved word. All fraud logic lives downstream in fraud_features.
+    columns:
+      - name: transaction_id
+        description: "Unique ID for the payment, generated at ingestion (UUID). Cast to STRING."
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: "ID of the customer who made the purchase. Cast to STRING to prevent accidental aggregation in BI tools."
+
+      - name: merchant_id
+        description: "ID of the store or vendor receiving the payment. Cast to STRING."
+
+      - name: transaction_at
+        description: "When the transaction occurred (UTC). Renamed from `timestamp` and cast to TIMESTAMP."
+        tests:
+          - not_null
+
+      - name: amount
+        description: "Transaction value in CAD. Cast to NUMERIC (exact decimal) rather than FLOAT, the correct type for money."
+
+      - name: category
+        description: "Merchant category of the purchase (e.g. groceries, electronics). Used for spend pattern analysis."
+
+      - name: is_suspicious_flag
+        description: >
+          Ground truth label from the data simulator marking rows generated
+          as fraud. Used only to evaluate how well the risk rules perform,
+          never as an input to them. A real pipeline would not have this
+          column; it exists because the data is synthetic.
