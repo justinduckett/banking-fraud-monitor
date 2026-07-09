@@ -20,6 +20,21 @@ models:
         tests:
           - not_null
 
+      - name: transaction_at
+        description: "When the transaction occurred (UTC). Window features are ordered by this timestamp."
+
+      - name: amount
+        description: "Transaction value in CAD (NUMERIC). Compared against avg_spend_30_days by risk rule 1."
+
+      - name: category
+        description: "Merchant category of the purchase. High-risk categories (gift cards, crypto, online gaming) feature heavily in simulated fraud."
+
+      - name: is_suspicious_flag
+        description: >
+          Ground truth label from the data simulator. Retained solely to
+          evaluate rule performance (comparing flags against known fraud);
+          never used as an input to the risk rules themselves.
+
       - name: velocity_last_hour
         description: >
           Velocity risk metric. Count of all transactions by this customer_id
