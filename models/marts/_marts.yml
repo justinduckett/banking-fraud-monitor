@@ -2,23 +2,58 @@ version: 2
 
 models:
   - name: fraud_features
-    description: "The central feature store for fraud analysis. One row per transaction, enriched with lookback metrics."
+    description: >
+      The central feature store for fraud analysis. One row per transaction,
+      enriched with behavioral lookback metrics and rule-based risk flags.
+      Rules are a triage layer: they prioritize transactions for manual review
+      and are deliberately tuned to over-flag (false positives cost analyst
+      minutes, false negatives cost fraud losses).
     columns:
+      - name: transaction_id
+        description: "Primary key. One row per transaction."
+        tests:
+          - unique
+          - not_null
+
       - name: customer_id
-        description: "Foreign Key to the Customer Dimension. Cast as STRING to prevent aggregation in BI tools."
+        description: "Foreign key to the customer. Cast as STRING to prevent accidental aggregation in BI tools."
         tests:
           - not_null
 
       - name: velocity_last_hour
-        description: "Velocity Risk Metric. specific calculation: Count of all transactions by this `customer_id` in the sliding window of [T-1 hour, T-now]."
+        description: >
+          Velocity risk metric. Count of all transactions by this customer_id
+          in the rolling window [T minus 1 hour, T], including the current
+          transaction. Minimum possible value is therefore 1.
         tests:
           - not_null
-          # Logic Test: Velocity can never be less than 1 (the current transaction itself)
+          # Logic test: velocity can never be less than 1 (the current transaction itself)
           - dbt_utils.expression_is_true:
-              expression: ">= 1"
+              arguments:
+                expression: ">= 1"
 
       - name: avg_spend_30_days
-        description: "Baseline Spending Metric. Average `amount` for this customer over the preceding 30 days (2,592,000 seconds)."
+        description: >
+          Baseline spending metric. Average amount for this customer over the
+          preceding 30 days, EXCLUDING the current transaction so the baseline
+          is not contaminated by the event being scored. NULL for a customer's
+          first observed transaction (no prior history exists).
 
       - name: is_high_amount_spike
-        description: "Risk Trigger. Boolean is TRUE if current `amount` > 5x the `avg_spend_30_days`. Used for the 'High Risk' chart in Looker."
+        description: >
+          Risk rule 1. TRUE when amount exceeds 5x avg_spend_30_days.
+          Policy: a customer's first transaction is never flagged because no
+          baseline exists to compare against. Consumed by the 'High risk by
+          spend' dashboard page.
+        tests:
+          - not_null
+
+      - name: is_velocity_attack
+        description: >
+          Risk rule 2. TRUE when velocity_last_hour exceeds 3, the signature
+          of card testing attacks (rapid small purchases validating a stolen
+          card). Threshold lives here, not in the BI layer, so it is version
+          controlled and tested. Consumed by the 'High risk by velocity'
+          dashboard page.
+        tests:
+          - not_null

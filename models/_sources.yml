@@ -31,6 +31,11 @@ sources:
 
           - name: amount
             description: "The total value of the transaction in CAD."
+            tests:
+              - not_null
+              - dbt_utils.expression_is_true:
+                  arguments:
+                    expression: ">= 0"
 
           - name: is_suspicious_flag
             description: "A preliminary warning flag from the ingestion engine. TRUE indicates the transaction matched basic fraud patterns (e.g., high-risk category) at the moment of purchase."
