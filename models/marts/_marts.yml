@@ -59,7 +59,7 @@ models:
           Risk rule 1. TRUE when amount exceeds 5x avg_spend_30_days.
           Policy: a customer's first transaction is never flagged because no
           baseline exists to compare against. Consumed by the 'High risk by
-          spend' dashboard page.
+          spend' dashboard views.
         tests:
           - not_null
 
@@ -69,6 +69,24 @@ models:
           of card testing attacks (rapid small purchases validating a stolen
           card). Threshold lives here, not in the BI layer, so it is version
           controlled and tested. Consumed by the 'High risk by velocity'
-          dashboard page.
+          dashboard views.
         tests:
           - not_null
+
+      - name: transaction_type
+        description: >
+          Single classification of every transaction, derived from the two
+          risk rules: 'normal', 'high_amount_spike', 'velocity_attack', or
+          'spike_and_velocity' when both rules fire. 'normal' is an explicit
+          value rather than NULL so BI tools can chart and filter without
+          null handling. Powers the triage feed filter and the transaction
+          trend breakdown on the dashboard.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - normal
+                  - high_amount_spike
+                  - velocity_attack
+                  - spike_and_velocity

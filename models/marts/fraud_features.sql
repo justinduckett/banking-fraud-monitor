@@ -39,7 +39,8 @@ features as (
 
 ),
 
-final as (
+-- Apply the risk rules and enforce output data types
+rules as (
 
     select
         transaction_id,
@@ -71,6 +72,25 @@ final as (
         cast(velocity_last_hour > 3 as boolean) as is_velocity_attack
 
     from features
+
+),
+
+final as (
+
+    select
+        *,
+
+        -- Single classification of every transaction, derived from the rules
+        -- above. 'normal' is an explicit value rather than null so BI tools
+        -- can chart and filter the column without null handling.
+        case
+            when is_high_amount_spike and is_velocity_attack then 'spike_and_velocity'
+            when is_high_amount_spike then 'high_amount_spike'
+            when is_velocity_attack then 'velocity_attack'
+            else 'normal'
+        end as transaction_type
+
+    from rules
 
 )
 
