@@ -2,8 +2,8 @@ name: Daily Fraud Data Ingest
 
 on:
   schedule:
-    # Run at 8:00 AM UTC every day
-    - cron: "0 8 * * *"
+    # Run at 7:00 AM UTC every day, 2am EST
+    - cron: "23 7 * * *"
   # Allows manual trigger
   workflow_dispatch:
 
