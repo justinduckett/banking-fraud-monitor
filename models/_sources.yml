@@ -7,6 +7,12 @@ sources:
     schema: fraud_data
     tables:
       - name: raw_transactions
+        config:
+          loaded_at_field: "cast(timestamp as timestamp)"
+          freshness:
+            warn_after: {count: 24, period: hour}
+            error_after: {count: 36, period: hour}
+
         description: "Append-only log of all transactions. Ingested via Python script with 24-hour jitter logic."
         columns:
           - name: transaction_id
